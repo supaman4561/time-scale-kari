@@ -2,6 +2,7 @@
   "expo": {
     "name": "time-scale-kari",
     "slug": "time-scale-kari",
+    "scheme": "time-scale-kari",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
