@@ -85,7 +85,7 @@ class CategoryCard extends StatelessWidget {
                   if (isOver) _badge('超過', const Color(0xFFEF4444)),
                   const SizedBox(width: 8),
                   Text(
-                    '${_formatMin(totalSec)} / $budgetMin分',
+                    '${_formatSecAsMin(totalSec)} / $budgetMin分',
                     style: const TextStyle(color: Color(0xFF64748B), fontSize: 13),
                   ),
                 ],
@@ -112,7 +112,7 @@ class CategoryCard extends StatelessWidget {
         ),
       );
 
-  String _formatMin(int sec) {
+  String _formatSecAsMin(int sec) {
     final m = sec ~/ 60;
     return '$m分';
   }

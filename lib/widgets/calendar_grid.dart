@@ -22,6 +22,8 @@ class CalendarGrid extends StatelessWidget {
     final daysInMonth = DateTime(month.year, month.month + 1, 0).day;
     final startOffset = (firstDay.weekday - 1) % 7;
 
+    final prefix = '${month.year}-${month.month.toString().padLeft(2, '0')}';
+
     final cells = <Widget>[
       for (final label in ['月', '火', '水', '木', '金', '土', '日'])
         Center(
@@ -30,14 +32,17 @@ class CalendarGrid extends StatelessWidget {
         ),
       for (var i = 0; i < startOffset; i++) const SizedBox.shrink(),
       for (var d = 1; d <= daysInMonth; d++)
-        _DayCell(
-          day: d,
-          date: '${month.year}-${month.month.toString().padLeft(2, '0')}-${d.toString().padLeft(2, '0')}',
-          isToday: todayStr ==
-              '${month.year}-${month.month.toString().padLeft(2, '0')}-${d.toString().padLeft(2, '0')}',
-          status: statusMap['${month.year}-${month.month.toString().padLeft(2, '0')}-${d.toString().padLeft(2, '0')}'] ??
-              DayStatus.noData,
-          onTap: onDayTap,
+        Builder(
+          builder: (_) {
+            final dateStr = '$prefix-${d.toString().padLeft(2, '0')}';
+            return _DayCell(
+              day: d,
+              date: dateStr,
+              isToday: todayStr == dateStr,
+              status: statusMap[dateStr] ?? DayStatus.noData,
+              onTap: onDayTap,
+            );
+          },
         ),
     ];
 
