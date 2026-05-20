@@ -98,7 +98,8 @@ Future<void> startForegroundTimer({
     notificationText: '0:00',
     callback: startCallback,
   );
-  // データを TaskHandler へ送信
+  // ハンドラーのIsolate起動を待ってからデータを送信
+  await Future.delayed(const Duration(milliseconds: 500));
   FlutterForegroundTask.sendDataToTask({
     'started_at': startedAt,
     'budget_sec': budgetSec,
