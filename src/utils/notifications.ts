@@ -7,6 +7,8 @@ Notifications.setNotificationHandler({
     shouldShowAlert: true,
     shouldPlaySound: true,
     shouldSetBadge: false,
+    shouldShowBanner: true,
+    shouldShowList: true,
   }),
 });
 
@@ -29,7 +31,7 @@ export async function scheduleTimerNotification(
 ): Promise<string> {
   return Notifications.scheduleNotificationAsync({
     content: { title, body, sound: true },
-    trigger: { seconds: delaySeconds, repeats: false },
+    trigger: { type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds: delaySeconds, repeats: false },
   });
 }
 

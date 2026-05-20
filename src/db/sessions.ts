@@ -49,3 +49,20 @@ export function getInProgressSession(): Session | null {
     'SELECT * FROM sessions WHERE ended_at IS NULL LIMIT 1',
   );
 }
+
+export function getMonthTotals(year: number, month: number): Record<string, Record<number, number>> {
+  const prefix = `${year}-${String(month + 1).padStart(2, '0')}`;
+  const rows = getDb().getAllSync<{ date: string; category_id: number; total: number }>(
+    `SELECT date, category_id,
+     SUM(CASE WHEN ended_at IS NOT NULL THEN duration_sec
+              ELSE CAST(strftime('%s','now') AS INTEGER) - started_at END) AS total
+     FROM sessions WHERE date LIKE ? GROUP BY date, category_id`,
+    `${prefix}%`,
+  );
+  const result: Record<string, Record<number, number>> = {};
+  for (const r of rows) {
+    if (!result[r.date]) result[r.date] = {};
+    result[r.date][r.category_id] = r.total ?? 0;
+  }
+  return result;
+}
