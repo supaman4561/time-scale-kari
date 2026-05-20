@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'db/schema.dart';
 import 'providers/category_provider.dart';
@@ -52,6 +53,8 @@ class _AppShellState extends ConsumerState<AppShell> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
+      // 通知・フォアグラウンドサービスの実行時権限を要求（Android 13+）
+      await FlutterForegroundTask.requestNotificationPermission();
       await ref.read(timerProvider.notifier).restore();
       final timer = ref.read(timerProvider);
       if (timer.isActive && timer.startedAt != null) {
