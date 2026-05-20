@@ -17,11 +17,20 @@ class CalendarScreen extends ConsumerStatefulWidget {
 class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   DateTime _month = DateTime.now();
   Map<String, DayStatus> _statusMap = {};
+  Map<String, List<({Color color, bool cleared})>> _categoryDots = {};
 
   @override
   void initState() {
     super.initState();
     _loadMonth();
+  }
+
+  Color _parseCatColor(String hex) {
+    try {
+      return Color(0xFF000000 | int.parse(hex.replaceFirst('#', ''), radix: 16));
+    } catch (_) {
+      return const Color(0xFF64B5F6);
+    }
   }
 
   Future<void> _loadMonth() async {
@@ -32,6 +41,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     final db = await getDailySessions(yearMonth);
 
     final statusMap = <String, DayStatus>{};
+    final categoryDots = <String, List<({Color color, bool cleared})>>{};
 
     for (final entry in db.entries) {
       final dateStr = entry.key;
@@ -50,9 +60,24 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
       final cleared = isDayCleared(results);
       statusMap[dateStr] = cleared ? DayStatus.clear : DayStatus.notClear;
+
+      final dots = categories.map((cat) {
+        final budgetMin =
+            isWeekendDay ? cat.weekendBudgetMin : cat.weekdayBudgetMin;
+        final totalSec = totals[cat.id] ?? 0;
+        final catCleared = isCategoryCleared(
+            type: cat.type, budgetMin: budgetMin, totalSec: totalSec);
+        return (color: _parseCatColor(cat.color), cleared: catCleared);
+      }).toList();
+      categoryDots[dateStr] = dots;
     }
 
-    if (mounted) setState(() => _statusMap = statusMap);
+    if (mounted) {
+      setState(() {
+        _statusMap = statusMap;
+        _categoryDots = categoryDots;
+      });
+    }
   }
 
   void _prevMonth() {
@@ -97,6 +122,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             CalendarGrid(
               month: _month,
               statusMap: _statusMap,
+              categoryDots: _categoryDots,
               onDayTap: (date) {
                 Navigator.push(
                   context,

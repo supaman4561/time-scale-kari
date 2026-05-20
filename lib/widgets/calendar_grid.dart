@@ -7,12 +7,14 @@ class CalendarGrid extends StatelessWidget {
   final DateTime month;
   final Map<String, DayStatus> statusMap;
   final void Function(String date) onDayTap;
+  final Map<String, List<({Color color, bool cleared})>>? categoryDots;
 
   const CalendarGrid({
     super.key,
     required this.month,
     required this.statusMap,
     required this.onDayTap,
+    this.categoryDots,
   });
 
   @override
@@ -41,6 +43,9 @@ class CalendarGrid extends StatelessWidget {
               isToday: todayStr == dateStr,
               status: statusMap[dateStr] ?? DayStatus.noData,
               onTap: onDayTap,
+              dots: categoryDots != null
+                  ? (categoryDots![dateStr] ?? [])
+                  : null,
             );
           },
         ),
@@ -63,6 +68,7 @@ class _DayCell extends StatelessWidget {
   final bool isToday;
   final DayStatus status;
   final void Function(String) onTap;
+  final List<({Color color, bool cleared})>? dots;
 
   const _DayCell({
     required this.day,
@@ -70,13 +76,16 @@ class _DayCell extends StatelessWidget {
     required this.isToday,
     required this.status,
     required this.onTap,
+    this.dots,
   });
 
   @override
   Widget build(BuildContext context) {
     Color? dotColor;
-    if (status == DayStatus.clear) dotColor = const Color(0xFF10B981);
-    if (status == DayStatus.notClear) dotColor = const Color(0xFFEF4444);
+    if (dots == null) {
+      if (status == DayStatus.clear) dotColor = const Color(0xFF10B981);
+      if (status == DayStatus.notClear) dotColor = const Color(0xFFEF4444);
+    }
 
     return GestureDetector(
       onTap: () => onTap(date),
@@ -96,7 +105,21 @@ class _DayCell extends StatelessWidget {
                 fontWeight: isToday ? FontWeight.w700 : FontWeight.normal,
               ),
             ),
-            if (dotColor != null) ...[
+            if (dots != null && dots!.isNotEmpty) ...[
+              const SizedBox(height: 2),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: dots!.take(5).map((d) => Container(
+                  width: 4,
+                  height: 4,
+                  margin: const EdgeInsets.symmetric(horizontal: 1),
+                  decoration: BoxDecoration(
+                    color: d.cleared ? d.color : const Color(0xFF334155),
+                    shape: BoxShape.circle,
+                  ),
+                )).toList(),
+              ),
+            ] else if (dotColor != null) ...[
               const SizedBox(height: 2),
               Container(
                 width: 5,

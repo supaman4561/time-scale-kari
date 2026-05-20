@@ -76,7 +76,12 @@ class _DayDetailScreenState extends ConsumerState<DayDetailScreen> {
                       totalSec: totalSec,
                     );
                     final dotColor = _parseColor(cat.color);
-                    final progress = budgetMin > 0 ? totalSec / (budgetMin * 60) : 0.0;
+                    final budgetSec = budgetMin * 60;
+                    final progress = budgetMin > 0
+                        ? cat.type == 'limit'
+                            ? (budgetSec - totalSec).clamp(0, budgetSec) / budgetSec
+                            : totalSec / budgetSec
+                        : 0.0;
 
                     return Container(
                       margin: const EdgeInsets.only(bottom: 8),
@@ -114,8 +119,12 @@ class _DayDetailScreenState extends ConsumerState<DayDetailScreen> {
                                     style: TextStyle(color: AppColors.green, fontSize: 10, fontWeight: FontWeight.w700)),
                                 ),
                               const SizedBox(width: 8),
-                              Text('${totalSec ~/ 60}分 / $budgetMin分',
-                                style: const TextStyle(color: AppColors.textSub, fontSize: 13)),
+                              Text(
+                                cat.type == 'limit'
+                                    ? '残り${((budgetSec - totalSec).clamp(0, budgetSec) ~/ 60)}分'
+                                    : '${totalSec ~/ 60}分 / $budgetMin分',
+                                style: const TextStyle(color: AppColors.textSub, fontSize: 13),
+                              ),
                             ],
                           ),
                           const SizedBox(height: 10),
