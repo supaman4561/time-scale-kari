@@ -55,7 +55,7 @@ class _AppShellState extends ConsumerState<AppShell> {
       await ref.read(timerProvider.notifier).restore();
       final timer = ref.read(timerProvider);
       if (timer.isActive && timer.startedAt != null) {
-        final cats = ref.read(categoryProvider).valueOrNull ?? [];
+        final cats = await ref.read(categoryProvider.future);
         if (cats.isEmpty) return;
         final cat = cats.firstWhere(
           (c) => c.id == timer.activeCategoryId,

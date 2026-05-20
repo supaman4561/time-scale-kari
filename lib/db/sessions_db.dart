@@ -45,7 +45,7 @@ Future<Session?> getInProgressSession() async {
 Future<void> closeAbandonedSessions() async {
   final db = await getDb();
   final now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
-  final rows = await db.query('sessions', where: 'ended_at IS NULL');
+  final rows = await db.query('sessions', where: 'ended_at IS NULL', orderBy: 'started_at ASC');
   if (rows.isEmpty) return;
   final toClose = rows.length > 1 ? rows.sublist(0, rows.length - 1) : <Map<String, dynamic>>[];
   final batch = db.batch();
