@@ -91,8 +91,8 @@ class CategoryCard extends StatelessWidget {
                   const SizedBox(width: 8),
                   Text(
                     category.type == 'limit'
-                        ? '残り${_formatSecAsMin((budgetSec - totalSec).clamp(0, budgetSec))}'
-                        : '${_formatSecAsMin(totalSec)} / $budgetMin分',
+                        ? '残り ${formatDuration((budgetSec - totalSec).clamp(0, budgetSec))}'
+                        : '${formatDuration(totalSec)} / ${formatDuration(budgetSec)}',
                     style: TextStyle(
                       color: isOver
                           ? const Color(0xFFEF4444)
@@ -123,11 +123,6 @@ class CategoryCard extends StatelessWidget {
           style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.w700),
         ),
       );
-
-  String _formatSecAsMin(int sec) {
-    final m = sec ~/ 60;
-    return '$m分';
-  }
 
   Color _parseColor(String hex) {
     try {

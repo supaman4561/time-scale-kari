@@ -121,8 +121,8 @@ class _DayDetailScreenState extends ConsumerState<DayDetailScreen> {
                               const SizedBox(width: 8),
                               Text(
                                 cat.type == 'limit'
-                                    ? '残り${((budgetSec - totalSec).clamp(0, budgetSec) ~/ 60)}分'
-                                    : '${totalSec ~/ 60}分 / $budgetMin分',
+                                    ? '残り ${formatDuration((budgetSec - totalSec).clamp(0, budgetSec))}'
+                                    : '${formatDuration(totalSec)} / ${formatDuration(budgetSec)}',
                                 style: const TextStyle(color: AppColors.textSub, fontSize: 13),
                               ),
                             ],

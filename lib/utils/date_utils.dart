@@ -17,11 +17,12 @@ int getBudgetForDate(int weekdayBudgetMin, int weekendBudgetMin, [DateTime? dt])
   return isWeekend(dt) ? weekendBudgetMin : weekdayBudgetMin;
 }
 
-/// 経過秒数を HH:MM 形式にフォーマット
+/// 経過秒数を HH:MM:SS 形式にフォーマット
 String formatDuration(int totalSec) {
   final h = totalSec ~/ 3600;
   final m = (totalSec % 3600) ~/ 60;
-  return '${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}';
+  final s = totalSec % 60;
+  return '${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
 }
 
 /// 曜日の日本語表記
