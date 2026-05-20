@@ -17,7 +17,7 @@ it('stopSession は ended_at と duration_sec を UPDATE する', () => {
   stopSession(5);
   expect(mockDbInstance.runSync).toHaveBeenCalledWith(
     expect.stringContaining('UPDATE sessions'),
-    expect.any(Number), 5,
+    expect.any(Number), expect.any(Number), 5,
   );
 });
 

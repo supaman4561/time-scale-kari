@@ -21,8 +21,8 @@ export function startSession(categoryId: number, date: string): number {
 export function stopSession(sessionId: number): void {
   const endedAt = Math.floor(Date.now() / 1000);
   getDb().runSync(
-    'UPDATE sessions SET ended_at = ?, duration_sec = ended_at - started_at WHERE id = ?',
-    endedAt, sessionId,
+    'UPDATE sessions SET ended_at = ?, duration_sec = ? - started_at WHERE id = ?',
+    endedAt, endedAt, sessionId,
   );
 }
 
