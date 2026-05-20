@@ -36,7 +36,12 @@ class CategoryCard extends StatelessWidget {
     );
     final isOver = category.type == 'limit' && totalSec > budgetSec + 300;
     final dotColor = _parseColor(category.color);
-    final progress = budgetSec > 0 ? totalSec / budgetSec : 0.0;
+    // limit型は残り時間でゲージが減る演出（1.0 → 0.0）
+    final progress = budgetSec > 0
+        ? category.type == 'limit'
+            ? (budgetSec - totalSec).clamp(0, budgetSec) / budgetSec
+            : totalSec / budgetSec
+        : 0.0;
 
     final isDisabled = isAnyActive && !isActive;
 
@@ -85,8 +90,15 @@ class CategoryCard extends StatelessWidget {
                   if (isOver) _badge('超過', const Color(0xFFEF4444)),
                   const SizedBox(width: 8),
                   Text(
-                    '${_formatSecAsMin(totalSec)} / $budgetMin分',
-                    style: const TextStyle(color: Color(0xFF64748B), fontSize: 13),
+                    category.type == 'limit'
+                        ? '残り${_formatSecAsMin((budgetSec - totalSec).clamp(0, budgetSec))}'
+                        : '${_formatSecAsMin(totalSec)} / $budgetMin分',
+                    style: TextStyle(
+                      color: isOver
+                          ? const Color(0xFFEF4444)
+                          : const Color(0xFF64748B),
+                      fontSize: 13,
+                    ),
                   ),
                 ],
               ),
