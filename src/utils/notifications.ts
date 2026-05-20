@@ -38,3 +38,37 @@ export async function scheduleTimerNotification(
 export async function cancelNotification(notificationId: string): Promise<void> {
   await Notifications.cancelScheduledNotificationAsync(notificationId);
 }
+
+const ONGOING_ID = 'timer-ongoing';
+
+export async function showOngoingTimerNotification(categoryName: string): Promise<void> {
+  if (Platform.OS === 'android') {
+    await Notifications.setNotificationChannelAsync('timer-ongoing', {
+      name: '計測中',
+      importance: Notifications.AndroidImportance.LOW,
+      sound: null,
+      vibrationPattern: [],
+      enableVibrate: false,
+      showBadge: false,
+    });
+  }
+  await Notifications.scheduleNotificationAsync({
+    identifier: ONGOING_ID,
+    content: {
+      title: `⏱ ${categoryName} 計測中`,
+      body: 'タップしてアプリに戻る',
+      sound: false,
+      sticky: true,
+      autoDismiss: false,
+    },
+    trigger: null,
+  });
+}
+
+export async function dismissOngoingTimerNotification(): Promise<void> {
+  try {
+    await Notifications.dismissNotificationAsync(ONGOING_ID);
+  } catch {
+    // already dismissed
+  }
+}
