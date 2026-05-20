@@ -69,6 +69,8 @@ class _AppShellState extends ConsumerState<AppShell> {
             categoryName: cat.name,
             startedAt: timer.startedAt!,
             budgetSec: timer.budgetSec ?? 0,
+            previousTotalSec: timer.previousTotalSec,
+            categoryType: timer.categoryType,
           );
         } catch (e) {
           debugPrint('ForegroundService restore error: $e');

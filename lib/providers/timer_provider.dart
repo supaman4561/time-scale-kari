@@ -9,12 +9,16 @@ class TimerState {
   final int? activeCategoryId;
   final int? startedAt; // Unix seconds
   final int? budgetSec;
+  final int previousTotalSec;
+  final String categoryType;
 
   const TimerState({
     this.activeSessionId,
     this.activeCategoryId,
     this.startedAt,
     this.budgetSec,
+    this.previousTotalSec = 0,
+    this.categoryType = 'quota',
   });
 
   bool get isActive => activeSessionId != null;
@@ -24,24 +28,29 @@ class TimerState {
     int? activeCategoryId,
     int? startedAt,
     int? budgetSec,
+    int? previousTotalSec,
+    String? categoryType,
   }) =>
       TimerState(
         activeSessionId: activeSessionId ?? this.activeSessionId,
         activeCategoryId: activeCategoryId ?? this.activeCategoryId,
         startedAt: startedAt ?? this.startedAt,
         budgetSec: budgetSec ?? this.budgetSec,
+        previousTotalSec: previousTotalSec ?? this.previousTotalSec,
+        categoryType: categoryType ?? this.categoryType,
       );
 
-  static const empty = TimerState();
+  static const empty = TimerState(previousTotalSec: 0, categoryType: 'quota');
 }
 
 class TimerNotifier extends Notifier<TimerState> {
   @override
   TimerState build() => TimerState.empty;
 
-  Future<void> start(int categoryId, int budgetSec) async {
+  Future<void> start(int categoryId, int budgetSec, String categoryType) async {
     if (state.isActive) return;
     final date = getLocalDateString();
+    final previousTotal = await getCompletedTotalSec(categoryId, date);
     final sessionId = await startSession(categoryId, date);
     final now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
     state = TimerState(
@@ -49,6 +58,8 @@ class TimerNotifier extends Notifier<TimerState> {
       activeCategoryId: categoryId,
       startedAt: now,
       budgetSec: budgetSec,
+      previousTotalSec: previousTotal,
+      categoryType: categoryType,
     );
   }
 
@@ -76,11 +87,14 @@ class TimerNotifier extends Notifier<TimerState> {
     final budgetMin = cat != null
         ? getBudgetForDate(cat.weekdayBudgetMin, cat.weekendBudgetMin, now)
         : 0;
+    final previousTotal = await getCompletedTotalSec(session.categoryId, today);
     state = TimerState(
       activeSessionId: session.id,
       activeCategoryId: session.categoryId,
       startedAt: session.startedAt,
       budgetSec: budgetMin * 60,
+      previousTotalSec: previousTotal,
+      categoryType: cat?.type ?? 'quota',
     );
   }
 }

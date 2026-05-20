@@ -55,13 +55,16 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
       await ref.read(timerProvider.notifier).stop();
     } else {
       final budgetSec = budgetMin * 60;
-      await ref.read(timerProvider.notifier).start(category.id!, budgetSec);
-      final startedAt = ref.read(timerProvider).startedAt!;
+      await ref.read(timerProvider.notifier).start(category.id!, budgetSec, category.type);
+      final updatedTimer = ref.read(timerProvider);
+      final startedAt = updatedTimer.startedAt!;
       try {
         await startForegroundTimer(
           categoryName: category.name,
           startedAt: startedAt,
           budgetSec: budgetSec,
+          previousTotalSec: updatedTimer.previousTotalSec,
+          categoryType: updatedTimer.categoryType,
         );
       } catch (e) {
         debugPrint('ForegroundService error: $e');
@@ -121,6 +124,9 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                             .name,
                         startedAt: timer.startedAt!,
                         onStop: _handleStop,
+                        previousTotalSec: timer.previousTotalSec,
+                        budgetSec: timer.budgetSec ?? 0,
+                        categoryType: timer.categoryType,
                       ),
                     Expanded(
                       child: categories.isEmpty

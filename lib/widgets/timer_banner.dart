@@ -6,12 +6,18 @@ class TimerBanner extends StatefulWidget {
   final String categoryName;
   final int startedAt; // Unix seconds
   final VoidCallback onStop;
+  final int previousTotalSec;
+  final int budgetSec;
+  final String categoryType;
 
   const TimerBanner({
     super.key,
     required this.categoryName,
     required this.startedAt,
     required this.onStop,
+    required this.previousTotalSec,
+    required this.budgetSec,
+    required this.categoryType,
   });
 
   @override
@@ -76,7 +82,12 @@ class _TimerBannerState extends State<TimerBanner> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  formatDuration(_elapsed),
+                  formatDuration(() {
+                    final total = widget.previousTotalSec + _elapsed;
+                    return widget.categoryType == 'limit'
+                        ? (widget.budgetSec - total).clamp(0, widget.budgetSec)
+                        : total;
+                  }()),
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 26,

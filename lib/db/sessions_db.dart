@@ -76,6 +76,18 @@ Future<Map<int, int>> getTotalSecByCategory(String date) async {
   };
 }
 
+/// 完了済みセッション（ended_at IS NOT NULL）の合計秒数
+Future<int> getCompletedTotalSec(int categoryId, String date) async {
+  final db = await getDb();
+  final rows = await db.rawQuery('''
+    SELECT SUM(duration_sec) AS total
+    FROM sessions
+    WHERE category_id = ? AND date = ? AND ended_at IS NOT NULL
+  ''', [categoryId, date]);
+  if (rows.isEmpty) return 0;
+  return (rows.first['total'] as num?)?.toInt() ?? 0;
+}
+
 /// 月単位でdate -> {categoryId -> totalSec} を返す（ended_atがnullのものは除外）
 Future<Map<String, Map<int, int>>> getDailySessions(String yearMonth) async {
   final db = await getDb();

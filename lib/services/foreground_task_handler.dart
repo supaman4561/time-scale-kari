@@ -14,6 +14,8 @@ class TimerTaskHandler extends TaskHandler {
   int? _budgetSec;
   String _categoryName = '';
   bool _budgetNotified = false;
+  int _previousTotalSec = 0;
+  String _categoryType = 'quota';
   final _notifPlugin = FlutterLocalNotificationsPlugin();
 
   @override
@@ -31,6 +33,8 @@ class TimerTaskHandler extends TaskHandler {
       _startedAt = data['started_at'] as int?;
       _budgetSec = data['budget_sec'] as int?;
       _categoryName = data['category_name'] as String? ?? '';
+      _previousTotalSec = data['previous_total_sec'] as int? ?? 0;
+      _categoryType = data['category_type'] as String? ?? 'quota';
       _budgetNotified = false;
     }
   }
@@ -40,14 +44,18 @@ class TimerTaskHandler extends TaskHandler {
     if (_startedAt == null) return;
     final now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
     final elapsed = now - _startedAt!;
+    final total = _previousTotalSec + elapsed;
+    final display = _categoryType == 'limit'
+        ? ((_budgetSec ?? 0) - total).clamp(0, _budgetSec ?? 0)
+        : total;
 
     FlutterForegroundTask.updateService(
       notificationTitle: '$_categoryName 計測中',
-      notificationText: formatDuration(elapsed),
+      notificationText: formatDuration(display),
     );
 
     // 予算到達通知（1回だけ）
-    if (!_budgetNotified && _budgetSec != null && elapsed >= _budgetSec!) {
+    if (!_budgetNotified && _budgetSec != null && total >= _budgetSec!) {
       _budgetNotified = true;
       _notifPlugin.show(
         1,
@@ -91,6 +99,8 @@ Future<void> startForegroundTimer({
   required String categoryName,
   required int startedAt,
   required int budgetSec,
+  required int previousTotalSec,
+  required String categoryType,
 }) async {
   await FlutterForegroundTask.startService(
     serviceId: 100,
@@ -104,6 +114,8 @@ Future<void> startForegroundTimer({
     'started_at': startedAt,
     'budget_sec': budgetSec,
     'category_name': categoryName,
+    'previous_total_sec': previousTotalSec,
+    'category_type': categoryType,
   });
 }
 
