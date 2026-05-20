@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { View, FlatList, Text, StyleSheet, SafeAreaView } from 'react-native';
+import { View, FlatList, Text, StyleSheet, SafeAreaView, Alert } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCategoryStore } from '../store/categoryStore';
 import { useTimerStore } from '../store/timerStore';
@@ -53,7 +53,11 @@ export default function TodayScreen() {
         );
         setNotificationId(nid);
       }
-      await startForegroundTimer(category.name, Math.floor(Date.now() / 1000));
+      try {
+        await startForegroundTimer(category.name, Math.floor(Date.now() / 1000));
+      } catch (e: any) {
+        Alert.alert('フォアグラウンドサービスエラー', String(e?.message ?? e));
+      }
     }
     setTimeout(refresh, 200);
   };

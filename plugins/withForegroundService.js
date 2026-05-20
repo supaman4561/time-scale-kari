@@ -13,9 +13,16 @@ module.exports = function withForegroundService(config) {
           'android:name': serviceName,
           'android:enabled': 'true',
           'android:exported': 'false',
-          'android:foregroundServiceType': 'dataSync',
+          'android:foregroundServiceType': 'specialUse',
           'android:stopWithTask': 'true',
         },
+        // Required for specialUse type on Android 14+ (API 34+)
+        property: [{
+          $: {
+            'android:name': 'android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE',
+            'android:value': 'timer',
+          },
+        }],
       });
     }
     return config;
