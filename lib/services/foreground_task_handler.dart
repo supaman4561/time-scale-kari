@@ -54,19 +54,22 @@ class TimerTaskHandler extends TaskHandler {
       notificationText: formatDuration(display),
     );
 
-    // 予算到達通知（1回だけ）
-    if (!_budgetNotified && _budgetSec != null && total >= _budgetSec!) {
+    // 予算到達通知（1回だけ、budgetSec > 0 のときのみ）
+    if (!_budgetNotified && _budgetSec != null && _budgetSec! > 0 && total >= _budgetSec!) {
       _budgetNotified = true;
+      final body = _categoryType == 'limit' ? '上限時間に達しました' : 'ノルマ達成！';
       _notifPlugin.show(
         1,
         _categoryName,
-        '予定時間に達しました',
+        body,
         const NotificationDetails(
           android: AndroidNotificationDetails(
             'budget_channel',
             '予算通知',
-            importance: Importance.high,
-            priority: Priority.high,
+            importance: Importance.max,
+            priority: Priority.max,
+            playSound: true,
+            enableVibration: true,
           ),
         ),
       );
