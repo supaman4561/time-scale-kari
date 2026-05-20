@@ -33,8 +33,7 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-sqlite",
-      "@supersami/rn-foreground-service"
+      "expo-sqlite"
     ],
     "extra": {
       "eas": {
