@@ -25,4 +25,30 @@ class Session {
       );
 
   bool get isInProgress => endedAt == null;
+
+  Map<String, dynamic> toMap() => {
+        if (id != null) 'id': id,
+        'category_id': categoryId,
+        'date': date,
+        'started_at': startedAt,
+        if (endedAt != null) 'ended_at': endedAt,
+        if (durationSec != null) 'duration_sec': durationSec,
+      };
+
+  Session copyWith({
+    int? id,
+    int? categoryId,
+    String? date,
+    int? startedAt,
+    int? endedAt,
+    int? durationSec,
+  }) =>
+      Session(
+        id: id ?? this.id,
+        categoryId: categoryId ?? this.categoryId,
+        date: date ?? this.date,
+        startedAt: startedAt ?? this.startedAt,
+        endedAt: endedAt ?? this.endedAt,
+        durationSec: durationSec ?? this.durationSec,
+      );
 }
