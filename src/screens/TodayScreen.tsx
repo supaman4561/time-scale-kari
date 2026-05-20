@@ -5,10 +5,8 @@ import { useCategoryStore } from '../store/categoryStore';
 import { useTimerStore } from '../store/timerStore';
 import { getTotalSecByCategory } from '../db/sessions';
 import { getBudgetForDate, getLocalDateString } from '../utils/dateUtils';
-import {
-  scheduleTimerNotification, cancelNotification,
-  showOngoingTimerNotification, dismissOngoingTimerNotification,
-} from '../utils/notifications';
+import { scheduleTimerNotification, cancelNotification } from '../utils/notifications';
+import { startForegroundTimer, stopForegroundTimer } from '../utils/timerService';
 import { COLORS, SPACING } from '../theme';
 import CategoryCard from '../components/CategoryCard';
 import TimerBanner from '../components/TimerBanner';
@@ -25,10 +23,10 @@ export default function TodayScreen() {
     setTotalByCategory(getTotalSecByCategory(today));
   }, [today]);
 
-  // アプリ再起動後にタイマーが復元された場合も通知を表示する
+  // アプリ再起動後にタイマーが復元された場合もサービスを再開する
   useEffect(() => {
-    if (activeCategory) {
-      showOngoingTimerNotification(activeCategory.name);
+    if (activeCategory && startedAt) {
+      startForegroundTimer(activeCategory.name, startedAt);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -42,7 +40,7 @@ export default function TodayScreen() {
   const handlePress = async (category: Category) => {
     if (activeCategoryId === category.id) {
       if (notificationId) await cancelNotification(notificationId);
-      await dismissOngoingTimerNotification();
+      await stopForegroundTimer();
       stopTimer();
     } else if (activeSessionId === null) {
       startTimer(category.id, category.name, getBudgetForDate(category, now) * 60);
@@ -55,14 +53,14 @@ export default function TodayScreen() {
         );
         setNotificationId(nid);
       }
-      await showOngoingTimerNotification(category.name);
+      await startForegroundTimer(category.name, Math.floor(Date.now() / 1000));
     }
     setTimeout(refresh, 200);
   };
 
   const handleStop = async () => {
     if (notificationId) await cancelNotification(notificationId);
-    await dismissOngoingTimerNotification();
+    await stopForegroundTimer();
     stopTimer();
     setTimeout(refresh, 200);
   };
