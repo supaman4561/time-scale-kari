@@ -17,7 +17,11 @@ interface Props {
 export default function CategoryCard({ category, totalSec, budgetMin, isActive, onPress }: Props) {
   const budgetSec = budgetMin * 60;
   const cleared = isCategoryCleared(category.type, budgetMin, totalSec);
-  const progress = budgetSec > 0 ? totalSec / budgetSec : 0;
+  const progress = budgetSec > 0
+    ? category.type === 'limit'
+      ? Math.max(0, (budgetSec - totalSec) / budgetSec)
+      : totalSec / budgetSec
+    : 0;
   const overLimit = category.type === 'limit' && totalSec > budgetSec + 300;
 
   const displayTime =
