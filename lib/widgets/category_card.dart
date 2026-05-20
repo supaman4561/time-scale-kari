@@ -56,7 +56,7 @@ class CategoryCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: const Color(0xFF1E293B),
             borderRadius: BorderRadius.circular(14),
-            border: cleared
+            border: cleared && category.type != 'limit'
                 ? Border.all(color: const Color(0xFF10B981).withAlpha(76), width: 1)
                 : isOver
                     ? Border.all(color: const Color(0xFFEF4444).withAlpha(100), width: 1)
@@ -86,7 +86,7 @@ class CategoryCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                  if (cleared && !isOver) _badge('CLEAR', const Color(0xFF10B981)),
+                  if (cleared && !isOver && category.type != 'limit') _badge('CLEAR', const Color(0xFF10B981)),
                   if (isOver) _badge('超過', const Color(0xFFEF4444)),
                   const SizedBox(width: 8),
                   Text(

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../db/sessions_db.dart';
 import '../providers/category_provider.dart';
 import '../utils/clear_check.dart';
+import '../utils/date_utils.dart' show getLocalDateString;
 import '../widgets/calendar_grid.dart';
 import '../theme.dart';
 import 'day_detail_screen.dart';
@@ -42,6 +43,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
     final statusMap = <String, DayStatus>{};
     final categoryDots = <String, List<({Color color, bool cleared})>>{};
+    final todayStr = getLocalDateString();
 
     for (final entry in db.entries) {
       final dateStr = entry.key;
@@ -49,8 +51,11 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       final dt = DateTime.tryParse(dateStr) ?? DateTime.now();
       final isWeekendDay =
           dt.weekday == DateTime.saturday || dt.weekday == DateTime.sunday;
+      // limit型は当日終了後にクリア判定（今日はクリアとみなさない）
+      final isToday = dateStr == todayStr;
 
       final results = categories.map((cat) {
+        if (isToday && cat.type == 'limit') return false;
         final budgetMin =
             isWeekendDay ? cat.weekendBudgetMin : cat.weekdayBudgetMin;
         final totalSec = totals[cat.id] ?? 0;
@@ -62,6 +67,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       statusMap[dateStr] = cleared ? DayStatus.clear : DayStatus.notClear;
 
       final dots = categories.map((cat) {
+        if (isToday && cat.type == 'limit') {
+          return (color: _parseCatColor(cat.color), cleared: false);
+        }
         final budgetMin =
             isWeekendDay ? cat.weekendBudgetMin : cat.weekdayBudgetMin;
         final totalSec = totals[cat.id] ?? 0;

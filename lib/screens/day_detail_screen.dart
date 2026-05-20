@@ -44,6 +44,8 @@ class _DayDetailScreenState extends ConsumerState<DayDetailScreen> {
     final categoriesAsync = ref.watch(categoryProvider);
     final dt = DateTime.tryParse(widget.date) ?? DateTime.now();
     final label = '${widget.date}（${weekdayJa(dt)}）';
+    // limit型は当日終了後にクリア判定
+    final isToday = widget.date == getLocalDateString();
 
     return Scaffold(
       appBar: AppBar(
@@ -70,11 +72,13 @@ class _DayDetailScreenState extends ConsumerState<DayDetailScreen> {
                     final budgetMin = isWeekendDay
                         ? cat.weekendBudgetMin
                         : cat.weekdayBudgetMin;
-                    final cleared = isCategoryCleared(
-                      type: cat.type,
-                      budgetMin: budgetMin,
-                      totalSec: totalSec,
-                    );
+                    final cleared = !isToday || cat.type != 'limit'
+                        ? isCategoryCleared(
+                            type: cat.type,
+                            budgetMin: budgetMin,
+                            totalSec: totalSec,
+                          )
+                        : false;
                     final dotColor = _parseColor(cat.color);
                     final budgetSec = budgetMin * 60;
                     final progress = budgetMin > 0
