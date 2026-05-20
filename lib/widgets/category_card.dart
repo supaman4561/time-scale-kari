@@ -52,7 +52,7 @@ class CategoryCard extends StatelessWidget {
             color: const Color(0xFF1E293B),
             borderRadius: BorderRadius.circular(14),
             border: cleared
-                ? Border.all(color: const Color(0xFF10B981).withAlpha(100), width: 1)
+                ? Border.all(color: const Color(0xFF10B981).withAlpha(76), width: 1)
                 : isOver
                     ? Border.all(color: const Color(0xFFEF4444).withAlpha(100), width: 1)
                     : null,
