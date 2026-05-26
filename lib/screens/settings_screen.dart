@@ -1,11 +1,53 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/category_provider.dart';
+import '../services/health_service.dart';
 import '../theme.dart';
 import 'category_edit_screen.dart';
 
-class SettingsScreen extends ConsumerWidget {
+class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
+
+  @override
+  ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+  bool _healthConnected = false;
+  bool _healthLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadHealthStatus();
+  }
+
+  Future<void> _loadHealthStatus() async {
+    final connected = await isHealthConnected();
+    if (mounted) setState(() => _healthConnected = connected);
+  }
+
+  Future<void> _connectHealth() async {
+    setState(() => _healthLoading = true);
+    final result = await connectHealthConnect();
+    if (mounted) {
+      setState(() {
+        _healthConnected = result;
+        _healthLoading = false;
+      });
+    }
+  }
+
+  Future<void> _disconnectHealth() async {
+    setState(() => _healthLoading = true);
+    await disconnectHealthConnect();
+    if (mounted) {
+      setState(() {
+        _healthConnected = false;
+        _healthLoading = false;
+      });
+    }
+  }
 
   Color _parseColor(String hex) {
     try {
@@ -16,7 +58,7 @@ class SettingsScreen extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final categoriesAsync = ref.watch(categoryProvider);
 
     return SafeArea(
@@ -25,6 +67,62 @@ class SettingsScreen extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Container(
+              margin: const EdgeInsets.only(bottom: AppSpacing.md),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: AppColors.card,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: AppColors.border),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.bedtime, color: Color(0xFF6366F1), size: 20),
+                  const SizedBox(width: 12),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Health Connect',
+                          style: TextStyle(color: AppColors.textMain, fontSize: 14, fontWeight: FontWeight.w600)),
+                      Text(
+                        _healthConnected ? '睡眠データ連携済み' : '未連携',
+                        style: TextStyle(
+                          color: _healthConnected ? AppColors.green : AppColors.textSub,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const Spacer(),
+                  if (_healthLoading)
+                    const SizedBox(
+                      width: 20, height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  else
+                    GestureDetector(
+                      onTap: _healthConnected ? _disconnectHealth : _connectHealth,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: _healthConnected
+                              ? AppColors.border
+                              : const Color(0xFF6366F1).withAlpha(40),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          _healthConnected ? '解除' : '連携する',
+                          style: TextStyle(
+                            color: _healthConnected ? AppColors.textSub : const Color(0xFF6366F1),
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [

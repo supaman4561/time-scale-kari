@@ -36,7 +36,8 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
   }
 
   Future<void> _initSleep() async {
-    await requestSleepPermission();
+    final connected = await isHealthConnected();
+    if (!connected) return;
     final today = getLocalDateString();
     final sleep = await getSleepForDate(today);
     if (mounted) setState(() => _sleepSessions = sleep);

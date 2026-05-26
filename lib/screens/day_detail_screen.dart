@@ -34,7 +34,8 @@ class _DayDetailScreenState extends ConsumerState<DayDetailScreen> {
   Future<void> _load() async {
     final totals = await getTotalSecByCategory(widget.date);
     final sessions = await getSessionsForDate(widget.date);
-    final sleep = await getSleepForDate(widget.date);
+    final connected = await isHealthConnected();
+    final sleep = connected ? await getSleepForDate(widget.date) : <({DateTime start, DateTime end})>[];
     if (mounted) {
       setState(() {
         _totals = totals;
