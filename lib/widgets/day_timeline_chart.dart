@@ -6,12 +6,14 @@ class DayTimelineChart extends StatelessWidget {
   final List<Session> sessions;
   final Map<int, Color> categoryColors; // categoryId -> Color
   final String date; // YYYY-MM-DD
+  final List<({DateTime start, DateTime end})> sleepSessions;
 
   const DayTimelineChart({
     super.key,
     required this.sessions,
     required this.categoryColors,
     required this.date,
+    this.sleepSessions = const [],
   });
 
   @override
@@ -24,6 +26,7 @@ class DayTimelineChart extends StatelessWidget {
           sessions: sessions,
           categoryColors: categoryColors,
           date: date,
+          sleepSessions: sleepSessions,
         ),
       ),
     );
@@ -34,11 +37,13 @@ class _TimelinePainter extends CustomPainter {
   final List<Session> sessions;
   final Map<int, Color> categoryColors;
   final String date;
+  final List<({DateTime start, DateTime end})> sleepSessions;
 
   const _TimelinePainter({
     required this.sessions,
     required this.categoryColors,
     required this.date,
+    required this.sleepSessions,
   });
 
   @override
@@ -80,6 +85,27 @@ class _TimelinePainter extends CustomPainter {
 
     final rect = Rect.fromCircle(center: center, radius: radius);
 
+    // 睡眠データ弧（セッション弧の下に描画）
+    for (final sleep in sleepSessions) {
+      final startSec = (sleep.start.millisecondsSinceEpoch ~/ 1000 - midnight)
+          .clamp(0, daySeconds);
+      final endSec = (sleep.end.millisecondsSinceEpoch ~/ 1000 - midnight)
+          .clamp(0, daySeconds);
+      final duration = endSec - startSec;
+      if (duration <= 0) continue;
+
+      final startAngle = (startSec / daySeconds) * 2 * pi - pi / 2;
+      final sweepAngle = (duration / daySeconds) * 2 * pi;
+
+      final paint = Paint()
+        ..color = const Color(0xFF6366F1).withAlpha(200)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = strokeWidth
+        ..strokeCap = StrokeCap.butt;
+
+      canvas.drawArc(rect, startAngle, sweepAngle, false, paint);
+    }
+
     for (final s in sessions) {
       final startSec = (s.startedAt - midnight).clamp(0, daySeconds);
       final endSec = ((s.endedAt ?? nowSec) - midnight).clamp(0, daySeconds);
@@ -120,5 +146,7 @@ class _TimelinePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_TimelinePainter old) =>
-      old.sessions != sessions || old.date != date;
+      old.sessions != sessions ||
+      old.date != date ||
+      old.sleepSessions != sleepSessions;
 }

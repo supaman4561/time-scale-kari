@@ -7,6 +7,7 @@ import '../models/session.dart';
 import '../providers/category_provider.dart';
 import '../providers/timer_provider.dart';
 import '../services/foreground_task_handler.dart';
+import '../services/health_service.dart';
 import '../utils/date_utils.dart';
 import '../widgets/category_card.dart';
 import '../widgets/day_timeline_chart.dart';
@@ -23,6 +24,7 @@ class TodayScreen extends ConsumerStatefulWidget {
 class _TodayScreenState extends ConsumerState<TodayScreen> {
   Map<int, int> _totalByCategory = {};
   List<Session> _sessions = [];
+  List<({DateTime start, DateTime end})> _sleepSessions = [];
   Timer? _refreshTimer;
 
   @override
@@ -30,6 +32,14 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
     super.initState();
     _refresh();
     _refreshTimer = Timer.periodic(const Duration(seconds: 5), (_) => _refresh());
+    _initSleep();
+  }
+
+  Future<void> _initSleep() async {
+    await requestSleepPermission();
+    final today = getLocalDateString();
+    final sleep = await getSleepForDate(today);
+    if (mounted) setState(() => _sleepSessions = sleep);
   }
 
   @override
@@ -134,6 +144,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                                 if (cat.id != null) cat.id!: _parseColor(cat.color),
                             },
                             date: today,
+                            sleepSessions: _sleepSessions,
                           ),
                         ),
                       ),

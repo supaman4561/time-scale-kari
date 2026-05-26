@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../db/sessions_db.dart';
 import '../models/session.dart';
 import '../providers/category_provider.dart';
+import '../services/health_service.dart';
 import '../utils/clear_check.dart';
 import '../utils/date_utils.dart';
 import '../widgets/day_timeline_chart.dart';
@@ -21,6 +22,7 @@ class DayDetailScreen extends ConsumerStatefulWidget {
 class _DayDetailScreenState extends ConsumerState<DayDetailScreen> {
   Map<int, int> _totals = {};
   List<Session> _sessions = [];
+  List<({DateTime start, DateTime end})> _sleepSessions = [];
   bool _loading = true;
 
   @override
@@ -32,10 +34,12 @@ class _DayDetailScreenState extends ConsumerState<DayDetailScreen> {
   Future<void> _load() async {
     final totals = await getTotalSecByCategory(widget.date);
     final sessions = await getSessionsForDate(widget.date);
+    final sleep = await getSleepForDate(widget.date);
     if (mounted) {
       setState(() {
         _totals = totals;
         _sessions = sessions;
+        _sleepSessions = sleep;
         _loading = false;
       });
     }
@@ -84,6 +88,7 @@ class _DayDetailScreenState extends ConsumerState<DayDetailScreen> {
                                 if (cat.id != null) cat.id!: _parseColor(cat.color),
                             },
                             date: widget.date,
+                            sleepSessions: _sleepSessions,
                           ),
                         ),
                       ),
