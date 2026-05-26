@@ -88,6 +88,18 @@ Future<int> getCompletedTotalSec(int categoryId, String date) async {
   return (rows.first['total'] as num?)?.toInt() ?? 0;
 }
 
+/// 指定日の全セッションを取得（チャート描画用）
+Future<List<Session>> getSessionsForDate(String date) async {
+  final db = await getDb();
+  final rows = await db.query(
+    'sessions',
+    where: 'date = ?',
+    whereArgs: [date],
+    orderBy: 'started_at ASC',
+  );
+  return rows.map(Session.fromMap).toList();
+}
+
 /// 月単位でdate -> {categoryId -> totalSec} を返す（ended_atがnullのものは除外）
 Future<Map<String, Map<int, int>>> getDailySessions(String yearMonth) async {
   final db = await getDb();

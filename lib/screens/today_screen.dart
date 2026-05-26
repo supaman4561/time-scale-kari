@@ -3,11 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../db/sessions_db.dart';
 import '../models/category.dart';
+import '../models/session.dart';
 import '../providers/category_provider.dart';
 import '../providers/timer_provider.dart';
 import '../services/foreground_task_handler.dart';
 import '../utils/date_utils.dart';
 import '../widgets/category_card.dart';
+import '../widgets/day_timeline_chart.dart';
 import '../widgets/timer_banner.dart';
 import '../theme.dart';
 
@@ -20,6 +22,7 @@ class TodayScreen extends ConsumerStatefulWidget {
 
 class _TodayScreenState extends ConsumerState<TodayScreen> {
   Map<int, int> _totalByCategory = {};
+  List<Session> _sessions = [];
   Timer? _refreshTimer;
 
   @override
@@ -38,7 +41,21 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
   Future<void> _refresh() async {
     final today = getLocalDateString();
     final totals = await getTotalSecByCategory(today);
-    if (mounted) setState(() => _totalByCategory = totals);
+    final sessions = await getSessionsForDate(today);
+    if (mounted) {
+      setState(() {
+        _totalByCategory = totals;
+        _sessions = sessions;
+      });
+    }
+  }
+
+  Color _parseColor(String hex) {
+    try {
+      return Color(0xFF000000 | int.parse(hex.replaceFirst('#', ''), radix: 16));
+    } catch (_) {
+      return const Color(0xFF64B5F6);
+    }
   }
 
   Future<void> _handleTap(Category category) async {
@@ -106,6 +123,20 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
               data: (categories) => Expanded(
                 child: Column(
                   children: [
+                    if (_sessions.isNotEmpty)
+                      Center(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          child: DayTimelineChart(
+                            sessions: _sessions,
+                            categoryColors: {
+                              for (final cat in categories)
+                                if (cat.id != null) cat.id!: _parseColor(cat.color),
+                            },
+                            date: today,
+                          ),
+                        ),
+                      ),
                     if (timer.isActive && timer.startedAt != null)
                       TimerBanner(
                         categoryName: categories
