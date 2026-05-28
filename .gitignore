@@ -42,3 +42,16 @@ yarn-error.*
 
 # Superpowers brainstorm sessions
 .superpowers/
+
+# Flutter / Dart 生成ファイル
+.dart_tool/
+.flutter-plugins-dependencies
+.metadata
+build/
+*.iml
+
+# IDE
+.idea/
+
+# Flutter デフォルトスモークテスト（実テストが書かれたら外す）
+test/
