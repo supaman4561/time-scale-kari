@@ -43,7 +43,7 @@ Future<List<({DateTime start, DateTime end})>> getSleepForDate(String date) asyn
   try {
     final dt = DateTime.parse(date);
     final windowStart = DateTime(dt.year, dt.month, dt.day - 1, 12);
-    final windowEnd = DateTime(dt.year, dt.month, dt.day, 12);
+    final windowEnd = DateTime(dt.year, dt.month, dt.day + 1);
     final data = await _health.getHealthDataFromTypes(
       types: [HealthDataType.SLEEP_SESSION],
       startTime: windowStart,

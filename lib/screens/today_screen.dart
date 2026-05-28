@@ -21,30 +21,34 @@ class TodayScreen extends ConsumerStatefulWidget {
   ConsumerState<TodayScreen> createState() => _TodayScreenState();
 }
 
-class _TodayScreenState extends ConsumerState<TodayScreen> {
+class _TodayScreenState extends ConsumerState<TodayScreen>
+    with WidgetsBindingObserver {
   Map<int, int> _totalByCategory = {};
   List<Session> _sessions = [];
   List<({DateTime start, DateTime end})> _sleepSessions = [];
   Timer? _refreshTimer;
 
+  String _sleepLoadedDate = '';
+
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _refresh();
     _refreshTimer = Timer.periodic(const Duration(seconds: 5), (_) => _refresh());
-    _initSleep();
   }
 
-  Future<void> _initSleep() async {
-    final connected = await isHealthConnected();
-    if (!connected) return;
-    final today = getLocalDateString();
-    final sleep = await getSleepForDate(today);
-    if (mounted) setState(() => _sleepSessions = sleep);
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _sleepLoadedDate = ''; // 再取得を強制
+      _refresh();
+    }
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _refreshTimer?.cancel();
     super.dispose();
   }
@@ -53,7 +57,19 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
     final today = getLocalDateString();
     final totals = await getTotalSecByCategory(today);
     final sessions = await getSessionsForDate(today);
-    if (mounted) {
+    // 睡眠データは日付が変わった時 or 未取得の時のみ取得
+    if (_sleepLoadedDate != today) {
+      final connected = await isHealthConnected();
+      final sleep = connected ? await getSleepForDate(today) : <({DateTime start, DateTime end})>[];
+      if (mounted) {
+        setState(() {
+          _totalByCategory = totals;
+          _sessions = sessions;
+          _sleepSessions = sleep;
+          _sleepLoadedDate = today; // 連携有無にかかわらずロード済みとマーク
+        });
+      }
+    } else if (mounted) {
       setState(() {
         _totalByCategory = totals;
         _sessions = sessions;
@@ -82,6 +98,11 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
       await stopForegroundTimer();
       await ref.read(timerProvider.notifier).stop();
     } else {
+      // 別カテゴリ計測中なら先に停止してから切り替え
+      if (timer.isActive) {
+        await stopForegroundTimer();
+        await ref.read(timerProvider.notifier).stop();
+      }
       final budgetSec = budgetMin * 60;
       await ref.read(timerProvider.notifier).start(category.id!, budgetSec, category.type);
       final updatedTimer = ref.read(timerProvider);
@@ -134,21 +155,24 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
               data: (categories) => Expanded(
                 child: Column(
                   children: [
-                    if (_sessions.isNotEmpty)
+                    if (_sessions.isNotEmpty || _sleepSessions.isNotEmpty) ...[
                       Center(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 8),
-                          child: DayTimelineChart(
+                        child: DayTimelineChart(
                             sessions: _sessions,
                             categoryColors: {
                               for (final cat in categories)
                                 if (cat.id != null) cat.id!: _parseColor(cat.color),
                             },
+                            categoryNames: {
+                              for (final cat in categories)
+                                if (cat.id != null) cat.id!: cat.name,
+                            },
                             date: today,
                             sleepSessions: _sleepSessions,
                           ),
                         ),
-                      ),
+                      const SizedBox(height: 20),
+                    ],
                     if (timer.isActive && timer.startedAt != null)
                       TimerBanner(
                         categoryName: categories

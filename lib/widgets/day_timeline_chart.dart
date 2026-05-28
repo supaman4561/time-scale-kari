@@ -2,31 +2,169 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import '../models/session.dart';
 
-class DayTimelineChart extends StatelessWidget {
+class DayTimelineChart extends StatefulWidget {
   final List<Session> sessions;
-  final Map<int, Color> categoryColors; // categoryId -> Color
-  final String date; // YYYY-MM-DD
+  final Map<int, Color> categoryColors;
+  final Map<int, String> categoryNames;
+  final String date;
   final List<({DateTime start, DateTime end})> sleepSessions;
 
   const DayTimelineChart({
     super.key,
     required this.sessions,
     required this.categoryColors,
+    required this.categoryNames,
     required this.date,
     this.sleepSessions = const [],
   });
 
   @override
+  State<DayTimelineChart> createState() => _DayTimelineChartState();
+}
+
+class _TapInfo {
+  final String name;
+  final String timeRange;
+  final Color color;
+  _TapInfo({required this.name, required this.timeRange, required this.color});
+}
+
+class _DayTimelineChartState extends State<DayTimelineChart> {
+  _TapInfo? _info;
+
+  static const double _radius = 94.0; // ring radius (220/2 - 16)
+  static const double _strokeWidth = 36.0;
+  // CustomPaint(220x220) is centered in SizedBox(252x252) → offset = 16px
+  static const double _offset = 16.0;
+
+  String _fmt(DateTime dt) =>
+      '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+
+  void _handleTouch(Offset local) {
+    // SizedBox is 252x252; CustomPaint(220x220) is centered → ring center at (126,126)
+    const ringCenter = Offset(110 + _offset, 110 + _offset);
+    final dx = local.dx - ringCenter.dx;
+    final dy = local.dy - ringCenter.dy;
+    final dist = sqrt(dx * dx + dy * dy);
+
+    if (dist < _radius - _strokeWidth / 2 || dist > _radius + _strokeWidth / 2) {
+      setState(() => _info = null);
+      return;
+    }
+
+    final angle = atan2(dy, dx);
+    final normalized = (angle + pi / 2 + 2 * pi) % (2 * pi);
+    final tapSec = (normalized / (2 * pi) * 86400).round();
+
+    final dt = DateTime.tryParse(widget.date);
+    if (dt == null) return;
+    final midnight = DateTime(dt.year, dt.month, dt.day).millisecondsSinceEpoch ~/ 1000;
+    const daySeconds = 86400;
+    final nowSec = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+
+    // セッションを検索（後に描画されたものを優先）
+    for (final s in widget.sessions.reversed) {
+      final startSec = (s.startedAt - midnight).clamp(0, daySeconds);
+      final endSec = ((s.endedAt ?? nowSec) - midnight).clamp(0, daySeconds);
+      if (tapSec >= startSec && tapSec < endSec) {
+        final name = widget.categoryNames[s.categoryId] ?? '不明';
+        final color = widget.categoryColors[s.categoryId] ?? const Color(0xFF64B5F6);
+        final startDt = DateTime.fromMillisecondsSinceEpoch(s.startedAt * 1000);
+        final endDt = DateTime.fromMillisecondsSinceEpoch((s.endedAt ?? nowSec) * 1000);
+        setState(() => _info = _TapInfo(
+          name: name,
+          timeRange: '${_fmt(startDt)} ~ ${_fmt(endDt)}',
+          color: color,
+        ));
+        return;
+      }
+    }
+
+    // 睡眠セッションを検索
+    for (final sleep in widget.sleepSessions) {
+      final startSec = (sleep.start.millisecondsSinceEpoch ~/ 1000 - midnight).clamp(0, daySeconds);
+      final endSec = (sleep.end.millisecondsSinceEpoch ~/ 1000 - midnight).clamp(0, daySeconds);
+      if (tapSec >= startSec && tapSec < endSec) {
+        setState(() => _info = _TapInfo(
+          name: '睡眠',
+          timeRange: '${_fmt(sleep.start)} ~ ${_fmt(sleep.end)}',
+          color: const Color(0xFF6366F1),
+        ));
+        return;
+      }
+    }
+
+    setState(() => _info = null);
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 220,
-      height: 220,
-      child: CustomPaint(
-        painter: _TimelinePainter(
-          sessions: sessions,
-          categoryColors: categoryColors,
-          date: date,
-          sleepSessions: sleepSessions,
+    return GestureDetector(
+      onTapDown: (d) => _handleTouch(d.localPosition),
+      onPanStart: (d) => _handleTouch(d.localPosition),
+      onPanUpdate: (d) => _handleTouch(d.localPosition),
+      child: SizedBox(
+        width: 252,
+        height: 252,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            CustomPaint(
+              size: const Size(220, 220),
+              painter: _TimelinePainter(
+                sessions: widget.sessions,
+                categoryColors: widget.categoryColors,
+                date: widget.date,
+                sleepSessions: widget.sleepSessions,
+              ),
+            ),
+            if (_info != null)
+              Container(
+                width: 130,
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1E293B).withAlpha(230),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 8, height: 8,
+                          decoration: BoxDecoration(
+                            color: _info!.color,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 5),
+                        Flexible(
+                          child: Text(
+                            _info!.name,
+                            style: const TextStyle(
+                              color: Color(0xFFF1F5F9),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      _info!.timeRange,
+                      style: const TextStyle(
+                        color: Color(0xFF94A3B8),
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          ],
         ),
       ),
     );

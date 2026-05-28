@@ -46,7 +46,7 @@ class CategoryCard extends StatelessWidget {
     final isDisabled = isAnyActive && !isActive;
 
     return GestureDetector(
-      onTap: isDisabled ? null : onTap,
+      onTap: onTap,
       child: AnimatedOpacity(
         opacity: isDisabled ? 0.4 : 1.0,
         duration: const Duration(milliseconds: 200),

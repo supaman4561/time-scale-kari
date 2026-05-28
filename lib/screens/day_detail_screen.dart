@@ -78,15 +78,19 @@ class _DayDetailScreenState extends ConsumerState<DayDetailScreen> {
                 }
                 return Column(
                   children: [
-                    if (_sessions.isNotEmpty)
+                    if (_sessions.isNotEmpty || _sleepSessions.isNotEmpty)
                       Center(
                         child: Padding(
-                          padding: const EdgeInsets.all(16),
+                          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
                           child: DayTimelineChart(
                             sessions: _sessions,
                             categoryColors: {
                               for (final cat in categories)
                                 if (cat.id != null) cat.id!: _parseColor(cat.color),
+                            },
+                            categoryNames: {
+                              for (final cat in categories)
+                                if (cat.id != null) cat.id!: cat.name,
                             },
                             date: widget.date,
                             sleepSessions: _sleepSessions,

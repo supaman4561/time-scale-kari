@@ -77,7 +77,7 @@ class TimerTaskHandler extends TaskHandler {
   }
 
   @override
-  Future<void> onDestroy(DateTime timestamp) async {}
+  Future<void> onDestroy(DateTime timestamp, bool isTimeout) async {}
 }
 
 /// フォアグラウンドサービスの初期化（main()で一度だけ呼ぶ）
