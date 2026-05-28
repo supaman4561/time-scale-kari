@@ -99,7 +99,7 @@ class _DayDetailScreenState extends ConsumerState<DayDetailScreen> {
                       ),
                     Expanded(
                       child: ListView.builder(
-                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
                         itemCount: categories.length,
                         itemBuilder: (context, i) {
                           final cat = categories[i];
