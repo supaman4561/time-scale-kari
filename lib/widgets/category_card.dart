@@ -22,12 +22,7 @@ class CategoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final now = DateTime.now();
-    final budgetMin = getBudgetForDate(
-      category.weekdayBudgetMin,
-      category.weekendBudgetMin,
-      now,
-    );
+    final budgetMin = category.budgetMin;
     final budgetSec = budgetMin * 60;
     final cleared = isCategoryCleared(
       type: category.type,

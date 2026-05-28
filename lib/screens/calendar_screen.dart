@@ -49,32 +49,27 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       final dateStr = entry.key;
       final totals = entry.value;
       final dt = DateTime.tryParse(dateStr) ?? DateTime.now();
-      final isWeekendDay =
-          dt.weekday == DateTime.saturday || dt.weekday == DateTime.sunday;
-      // limit型は当日終了後にクリア判定（今日はクリアとみなさない）
       final isToday = dateStr == todayStr;
+      // アクティブ曜日のカテゴリのみ判定対象
+      final activeCats = categories.where((c) => c.isActiveOn(dt)).toList();
 
-      final results = categories.map((cat) {
+      final results = activeCats.map((cat) {
         if (isToday && cat.type == 'limit') return false;
-        final budgetMin =
-            isWeekendDay ? cat.weekendBudgetMin : cat.weekdayBudgetMin;
         final totalSec = totals[cat.id] ?? 0;
         return isCategoryCleared(
-            type: cat.type, budgetMin: budgetMin, totalSec: totalSec);
+            type: cat.type, budgetMin: cat.budgetMin, totalSec: totalSec);
       }).toList();
 
       final cleared = isDayCleared(results);
       statusMap[dateStr] = cleared ? DayStatus.clear : DayStatus.notClear;
 
-      final dots = categories.map((cat) {
+      final dots = activeCats.map((cat) {
         if (isToday && cat.type == 'limit') {
           return (color: _parseCatColor(cat.color), cleared: false);
         }
-        final budgetMin =
-            isWeekendDay ? cat.weekendBudgetMin : cat.weekdayBudgetMin;
         final totalSec = totals[cat.id] ?? 0;
         final catCleared = isCategoryCleared(
-            type: cat.type, budgetMin: budgetMin, totalSec: totalSec);
+            type: cat.type, budgetMin: cat.budgetMin, totalSec: totalSec);
         return (color: _parseCatColor(cat.color), cleared: catCleared);
       }).toList();
       categoryDots[dateStr] = dots;

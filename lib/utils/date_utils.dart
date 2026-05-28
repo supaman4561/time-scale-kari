@@ -6,16 +6,6 @@ String getLocalDateString([DateTime? dt]) {
   return '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 }
 
-/// 土・日を休日と判定
-bool isWeekend([DateTime? dt]) {
-  final d = dt ?? DateTime.now();
-  return d.weekday == DateTime.saturday || d.weekday == DateTime.sunday;
-}
-
-/// 指定日の予算分数を返す（平日 or 休日）
-int getBudgetForDate(int weekdayBudgetMin, int weekendBudgetMin, [DateTime? dt]) {
-  return isWeekend(dt) ? weekendBudgetMin : weekdayBudgetMin;
-}
 
 /// 経過秒数を HH:MM:SS 形式にフォーマット
 String formatDuration(int totalSec) {

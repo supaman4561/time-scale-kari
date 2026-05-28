@@ -104,11 +104,7 @@ class _DayDetailScreenState extends ConsumerState<DayDetailScreen> {
                         itemBuilder: (context, i) {
                           final cat = categories[i];
                           final totalSec = _totals[cat.id] ?? 0;
-                          final isWeekendDay = dt.weekday == DateTime.saturday ||
-                              dt.weekday == DateTime.sunday;
-                          final budgetMin = isWeekendDay
-                              ? cat.weekendBudgetMin
-                              : cat.weekdayBudgetMin;
+                          final budgetMin = cat.budgetMin;
                           final cleared = !isToday || cat.type != 'limit'
                               ? isCategoryCleared(
                                   type: cat.type,

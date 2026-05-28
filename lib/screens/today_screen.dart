@@ -87,23 +87,16 @@ class _TodayScreenState extends ConsumerState<TodayScreen>
 
   Future<void> _handleTap(Category category) async {
     final timer = ref.read(timerProvider);
-    final now = DateTime.now();
-    final budgetMin = getBudgetForDate(
-      category.weekdayBudgetMin,
-      category.weekendBudgetMin,
-      now,
-    );
 
     if (timer.activeCategoryId == category.id) {
       await stopForegroundTimer();
       await ref.read(timerProvider.notifier).stop();
     } else {
-      // 別カテゴリ計測中なら先に停止してから切り替え
       if (timer.isActive) {
         await stopForegroundTimer();
         await ref.read(timerProvider.notifier).stop();
       }
-      final budgetSec = budgetMin * 60;
+      final budgetSec = category.budgetMin * 60;
       await ref.read(timerProvider.notifier).start(category.id!, budgetSec, category.type);
       final updatedTimer = ref.read(timerProvider);
       final startedAt = updatedTimer.startedAt!;
@@ -183,8 +176,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen>
                                       name: '',
                                       type: 'quota',
                                       color: '#64b5f6',
-                                      weekdayBudgetMin: 0,
-                                      weekendBudgetMin: 0,
+                                      budgetMin: 0,
                                       sortOrder: 0)
                                   : categories.first,
                             )
@@ -203,19 +195,25 @@ class _TodayScreenState extends ConsumerState<TodayScreen>
                                 style: TextStyle(color: AppColors.textSub),
                               ),
                             )
-                          : ListView.builder(
-                              itemCount: categories.length,
-                              itemBuilder: (context, i) {
-                                final cat = categories[i];
-                                return CategoryCard(
-                                  category: cat,
-                                  totalSec: _totalByCategory[cat.id] ?? 0,
-                                  isActive: cat.id == timer.activeCategoryId,
-                                  isAnyActive: timer.isActive,
-                                  onTap: () => _handleTap(cat),
-                                );
-                              },
-                            ),
+                          : Builder(builder: (_) {
+                              final now = DateTime.now();
+                              final active = categories
+                                  .where((c) => c.isActiveOn(now))
+                                  .toList();
+                              return ListView.builder(
+                                itemCount: active.length,
+                                itemBuilder: (context, i) {
+                                  final cat = active[i];
+                                  return CategoryCard(
+                                    category: cat,
+                                    totalSec: _totalByCategory[cat.id] ?? 0,
+                                    isActive: cat.id == timer.activeCategoryId,
+                                    isAnyActive: timer.isActive,
+                                    onTap: () => _handleTap(cat),
+                                  );
+                                },
+                              );
+                            }),
                     ),
                   ],
                 ),

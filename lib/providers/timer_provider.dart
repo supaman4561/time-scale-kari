@@ -83,10 +83,7 @@ class TimerNotifier extends Notifier<TimerState> {
     // カテゴリのbudgetSecを取得する
     final cats = await fetchCategories();
     final cat = cats.where((c) => c.id == session.categoryId).firstOrNull;
-    final now = DateTime.now();
-    final budgetMin = cat != null
-        ? getBudgetForDate(cat.weekdayBudgetMin, cat.weekendBudgetMin, now)
-        : 0;
+    final budgetMin = cat?.budgetMin ?? 0;
     final previousTotal = await getCompletedTotalSec(session.categoryId, today);
     state = TimerState(
       activeSessionId: session.id,

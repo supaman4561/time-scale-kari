@@ -4,6 +4,9 @@ import '../models/category.dart';
 import '../providers/category_provider.dart';
 import '../theme.dart';
 
+// 月=1...日=7 (DateTime.weekday準拠)
+const _dayLabels = ['月', '火', '水', '木', '金', '土', '日'];
+
 class CategoryEditScreen extends ConsumerStatefulWidget {
   final Category? category;
   const CategoryEditScreen({super.key, this.category});
@@ -14,10 +17,10 @@ class CategoryEditScreen extends ConsumerStatefulWidget {
 
 class _CategoryEditScreenState extends ConsumerState<CategoryEditScreen> {
   late final TextEditingController _nameCtrl;
+  late final TextEditingController _budgetCtrl;
   late String _type;
   late String _color;
-  late final TextEditingController _weekdayCtrl;
-  late final TextEditingController _weekendCtrl;
+  late int _activeDays;
 
   final _colors = [
     '#64B5F6', '#4DB6AC', '#81C784', '#FFB74D',
@@ -31,23 +34,28 @@ class _CategoryEditScreenState extends ConsumerState<CategoryEditScreen> {
     _nameCtrl = TextEditingController(text: cat?.name ?? '');
     _type = cat?.type ?? 'quota';
     _color = cat?.color.toUpperCase() ?? '#64B5F6';
-    _weekdayCtrl = TextEditingController(
-        text: cat?.weekdayBudgetMin.toString() ?? '60');
-    _weekendCtrl = TextEditingController(
-        text: cat?.weekendBudgetMin.toString() ?? '60');
+    _budgetCtrl = TextEditingController(text: cat?.budgetMin.toString() ?? '60');
+    _activeDays = cat?.activeDays ?? 127;
   }
 
   @override
   void dispose() {
     _nameCtrl.dispose();
-    _weekdayCtrl.dispose();
-    _weekendCtrl.dispose();
+    _budgetCtrl.dispose();
     super.dispose();
   }
+
+  void _toggleDay(int weekday) {
+    final bit = 1 << (weekday - 1);
+    setState(() => _activeDays ^= bit);
+  }
+
+  bool _isDayActive(int weekday) => (_activeDays & (1 << (weekday - 1))) != 0;
 
   Future<void> _save() async {
     final name = _nameCtrl.text.trim();
     if (name.isEmpty) return;
+    final days = _activeDays == 0 ? 127 : _activeDays; // 全解除なら全曜日に戻す
 
     final notifier = ref.read(categoryProvider.notifier);
     final cats = ref.read(categoryProvider).valueOrNull ?? [];
@@ -57,8 +65,8 @@ class _CategoryEditScreenState extends ConsumerState<CategoryEditScreen> {
         name: name,
         type: _type,
         color: _color,
-        weekdayBudgetMin: int.tryParse(_weekdayCtrl.text) ?? 60,
-        weekendBudgetMin: int.tryParse(_weekendCtrl.text) ?? 60,
+        budgetMin: int.tryParse(_budgetCtrl.text) ?? 60,
+        activeDays: days,
         sortOrder: cats.length,
       ));
     } else {
@@ -66,8 +74,8 @@ class _CategoryEditScreenState extends ConsumerState<CategoryEditScreen> {
         name: name,
         type: _type,
         color: _color,
-        weekdayBudgetMin: int.tryParse(_weekdayCtrl.text) ?? 60,
-        weekendBudgetMin: int.tryParse(_weekendCtrl.text) ?? 60,
+        budgetMin: int.tryParse(_budgetCtrl.text) ?? 60,
+        activeDays: days,
       ));
     }
     if (mounted) Navigator.pop(context);
@@ -164,17 +172,47 @@ class _CategoryEditScreenState extends ConsumerState<CategoryEditScreen> {
               }).toList(),
             ),
             const SizedBox(height: AppSpacing.md),
-            _label('平日の目標（分）'),
-            TextField(
-              controller: _weekdayCtrl,
-              keyboardType: TextInputType.number,
-              style: const TextStyle(color: AppColors.textMain),
-              decoration: _inputDecoration('60'),
+            _label('対象曜日'),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: List.generate(7, (i) {
+                final weekday = i + 1;
+                final active = _isDayActive(weekday);
+                final isSat = weekday == 6;
+                final isSun = weekday == 7;
+                return GestureDetector(
+                  onTap: () => _toggleDay(weekday),
+                  child: Container(
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: active ? AppColors.blue : AppColors.card,
+                      shape: BoxShape.circle,
+                      border: active ? null : Border.all(color: AppColors.border),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      _dayLabels[i],
+                      style: TextStyle(
+                        color: active
+                            ? Colors.white
+                            : isSat
+                                ? const Color(0xFF60A5FA)
+                                : isSun
+                                    ? AppColors.red
+                                    : AppColors.textSub,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                );
+              }),
             ),
             const SizedBox(height: AppSpacing.md),
-            _label('休日の目標（分）'),
+            _label('目標（分）'),
             TextField(
-              controller: _weekendCtrl,
+              controller: _budgetCtrl,
               keyboardType: TextInputType.number,
               style: const TextStyle(color: AppColors.textMain),
               decoration: _inputDecoration('60'),
@@ -206,8 +244,7 @@ class _CategoryEditScreenState extends ConsumerState<CategoryEditScreen> {
   Widget _label(String text) => Padding(
         padding: const EdgeInsets.only(bottom: 6),
         child: Text(text,
-            style:
-                const TextStyle(color: AppColors.textSub, fontSize: 12)),
+            style: const TextStyle(color: AppColors.textSub, fontSize: 12)),
       );
 
   Widget _typeButton(String value, String label) => Expanded(
